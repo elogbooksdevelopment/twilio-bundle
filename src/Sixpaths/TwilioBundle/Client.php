@@ -9,7 +9,7 @@
 
 namespace Sixpaths\TwilioBundle;
 
-use Sixpaths\ComponentBundle\ParameterBag;
+use Sixpaths\Components\ParameterBag;
 use Sixpaths\TwilioBundle\Components\Message\MessageList;
 use Sixpaths\TwilioBundle\Components\Message\MessageListInterface;
 use Twilio\Rest\Client as TwilioClient;
@@ -57,7 +57,17 @@ class Client implements TwilioInterface
     }
 
     /**
-     * Gets the value of parameters
+     * Gets the value of twilioClient.
+     *
+     * @return TwilioClient
+     */
+    public function getTwilioClient(): TwilioClient
+    {
+        return $this->twilioClient;
+    }
+
+    /**
+     * Gets the value of parameters.
      *
      * @return ParameterBag
      */
@@ -68,10 +78,12 @@ class Client implements TwilioInterface
 
     public function __get(string $property)
     {
+        $methodName = 'get' . ucwords($property);
+
         if (!in_array($property, self::DISALLOWED_ACCESS) &&
             property_exists($this, $property) &&
-            method_exists($this, 'get' . ucwords(strtolower($property)))) {
-            return $this->property;
+            method_exists($this, $methodName)) {
+            return call_user_func_array([$this, $methodName], []);
         }
 
         throw new \InvalidArgumentException('Undefined property: ' . $property);

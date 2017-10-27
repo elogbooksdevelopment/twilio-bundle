@@ -9,15 +9,16 @@
 
 namespace Sixpaths\TwilioBundle\Command\Message;
 
-use Sixpaths\ComponentBundle\ParameterBag;
-use Sixpaths\TwilioBundle\Components\Message;
-use Sixpaths\TwilioBundle\Model\TwilioMessage;
+use Sixpaths\Components\ParameterBag;
+use Sixpaths\TwilioBundle\Components\Message\Message;
 use Sixpaths\TwilioBundle\Service\TwilioInterface;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Finder\Finder;
+use Symfony\Component\Finder\SplFileInfo;
 
 class SendCommand extends ContainerAwareCommand
 {
@@ -74,23 +75,35 @@ class SendCommand extends ContainerAwareCommand
 
         $this->finder->files()->in($this->parameters->getParameter('spool.directory'));
 
-        foreach ($finder as $file) {
-            $rawContent = $file->getContent();
-            $decodedContent = json_decode($rawContent);
+        foreach ($this->finder as $file) {
+            $rawContent = $file->getContents();
+            $message = unserialize($rawContent);
 
-            $message = new Message(
-                $decodedContent->to,
-                $decodedContent->options
-            );
+            $this->sendMessage($message);
+            $this->retainFile($file);
         }
     }
 
-    private function sendMessage(Message $message): bool
+    private function sendMessage(Message $message): void
     {
         $messages = $this->twilio->twilioClient->messages;
         $message = $messages->create(
             $message->getTo(),
             $message->getOptions()
         );
+    }
+
+    private function retainFile(SplFileInfo $file): void
+    {
+        $filesystem = new Filesystem;
+
+        if ($this->parameters->getParameter('spool.retain')) {
+            $filesystem->mkdir($file->getPath() . '/retained/');
+            $filesystem->rename($file->getPathname(), $file->getPath() . '/retained/' . $file->getFilename());
+            return;
+        }
+
+        $filesystem->remove([$file->getPathname()]);
+        return;
     }
 }

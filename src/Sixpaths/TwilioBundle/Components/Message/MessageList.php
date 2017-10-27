@@ -9,7 +9,7 @@
 
 namespace Sixpaths\TwilioBundle\Components\Message;
 
-use Sixpaths\ComponentBundle\ParameterBag;
+use Sixpaths\Components\ParameterBag;
 use Symfony\Component\Filesystem\Filesystem;
 use Twilio\Rest\Client as TwilioClient;
 
@@ -45,6 +45,8 @@ class MessageList implements MessageListInterface
         array $options
     ): void
     {
+        $options['from'] = $options['from'] ?? $this->parameters->getParameter('from');
+
         if ($this->parameters->getParameter('spool.enabled')) {
             $message = new Message($to, $options);
             $spoolType = $this->parameters->getParameter('spool.type');
@@ -68,6 +70,6 @@ class MessageList implements MessageListInterface
         $fileName = uniqid($message->getTo(), true);
         $filePath = $this->parameters->getParameter('spool.directory');
 
-        $filesystem->dumpFile(rtrim($filePath, '/') . '/' . $fileName, json_encode($message));
+        $filesystem->dumpFile(rtrim($filePath, '/') . '/' . $fileName, serialize($message));
     }
 }

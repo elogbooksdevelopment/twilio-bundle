@@ -23,26 +23,18 @@ $bundles = array(
 ```
 
 ## Configuration
-Add or include this in your `config.yml`
+Add or include this in your `config.yml` parameters
 
 ```yaml
-sixpaths:
-    twilio:
-        # Required: Account SID
-        username: ~
-        # Required: Auth Token
-        password: ~
+    sixpaths.twilio.username: <account sid>
+    sixpaths.twilio.password: <auth token>
+    sixpaths.twilio.spool.enabled: true
+    sixpaths.twilio.spool.type: file
+    sixpaths.twilio.spool.directory: '%kernel.root_dir%/../app/twilio/spool/'
+    sixpaths.twilio.spool.retain: true
 
-        # Optional: Spool
-        spool:
-            # Optional: Whether or not to spool messages or send immediately
-            enabled: false
-            # Optional: Which spool type to use [file|memory]
-            type: file
-            # Optional: Spool directory
-            directory: "%kernel.root_dir%/../app/twilio/spool/"
-            # Optional: Retain after sending
-            retain: false
+    sixpaths.twilio.from: '<phone number>'
+    sixpaths.twilio.defaults.to: '<phone number>'
 ```
 
 ## Usage
@@ -59,9 +51,9 @@ class SomeController extends Controller
         $messages = $twilio->messages;
 
         $message = $messages->create(
-            '01234567890', // Send a message to this number
+            '+441234567890', // Send a message to this number
             [
-                'from' => 09876543210', // Send the message from this number
+                'from' => '+449876543210', // Send the message from this number
                 'body' => 'Message Body', // The message to send
             ]
         );
@@ -87,12 +79,29 @@ class SomeCommand extends ContainerAwareCommand
         $messages = $twilio->messages;
 
         $message = $messages->create(
-            '01234567890', // Send a message to this number
+            '+441234567890', // Send a message to this number
             [
-                'from' => '09876543210', // Send the message from this number,
+                'from' => '+449876543210', // Send the message from this number,
                 'body' => 'Message Body', // The message to send
             ]
         );
     }
 }
 ```
+
+## Commands
+
+This bundle comes with two commands packaged.
+
+```bash
+sixpaths:twilio:spool:message:generate
+```
+
+This will allow you to generate messages - spooled or otherwise - to confirm settings. These will be sent to the default phone number (`sixpaths.twilio.defaults.to`)
+
+```bash
+sixpaths:twilio:spool:message:send
+```
+
+This will send any spooled messages and either remove or retain them.
+

@@ -9,9 +9,9 @@
 
 namespace Sixpaths\TwilioBundle\Command\Message;
 
-use Sixpaths\ComponentBundle\ParameterBag;
+use Sixpaths\Components\ParameterBag;
+use Sixpaths\TwilioBundle\Client;
 use Sixpaths\TwilioBundle\Components\Message;
-use Sixpaths\TwilioBundle\Model\TwilioMessage;
 use Sixpaths\TwilioBundle\Service\TwilioInterface;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputInterface;
@@ -72,26 +72,37 @@ class GenerateCommand extends ContainerAwareCommand
         $this->input = $input;
         $this->output = $output;
         $this->container = $this->getContainer();
+        $this->questionHelper = $this->getHelper('question');
 
         $this->twilio = $this->container->get('sixpaths.twilio');
 
         $parameters = $this->getArguments();
         $this->parameters = new ParameterBag($parameters);
 
-        if ($this->parameters->getParameter('spool.enabled')) {
-            $this->processFileSpool();
-        }
+        $client = new Client($parameters);
+        $messages = $client->messages;
+        $message = $messages->create($this->parameters->getParameter('defaults.to'), ['from' => $this->parameters->getParameter('from'), 'body' => 'Test SMS ' . mt_rand()]);
     }
 
     private function getArguments(): array
     {
-        $parameters = [];
+        $parameters = [
+            'username' => $this->container->getParameter('sixpaths.twilio.username'),
+            'password' => $this->container->getParameter('sixpaths.twilio.password'),
+            'from' => $this->container->getParameter('sixpaths.twilio.from'),
+            'defaults' => [
+                'to' => $this->container->getParameter('sixpaths.twilio.defaults.to'),
+            ],
+            'spool' => false
+        ];
 
-        $parameters['username'] = $this->validateUsername();
-        $parameters['password'] = $this->validatePassword();
-        $parameters['spool'] = $this->validateSpool();
-        $parameters['spoolType'] = $this->validateSpoolType($parameters['spool']);
-        $parameters['spoolDirectory'] = $this->validateSpoolDirectory($parameters['spoolType']);
+        if (($spool = $parameters['spool']['enabled'] = $this->validateSpool())) {
+            $parameters['spool']['type'] = $this->validateSpoolType($parameters['spool']['enabled']);
+            $parameters['spool']['directory'] = $this->validateSpoolDirectory($parameters['spool']['type']);
+        } else {
+            // $parameters['username'] = $this->validateUsername();
+            // $parameters['password'] = $this->validatePassword();
+        }
 
         return $parameters;
     }
@@ -121,8 +132,6 @@ class GenerateCommand extends ContainerAwareCommand
         $value = $this->input->getOption('spool');
         if ($value === null) {
             $value = $this->ask($this->getBooleanQuestion('Is spooling enabled?'));
-        } else if (in_array($value, ['true', 'false'])) {
-            $value = (bool)$value;
         }
 
         return $value;
@@ -140,6 +149,18 @@ class GenerateCommand extends ContainerAwareCommand
         }
 
         return null;
+    }
+
+    private function validateSpoolDirectory(string $spoolDirectory): ?string
+    {
+        $value = $this->input->getOption('spoolDirectory');
+        if ($value === null) {
+            $defaultDirectory = $this->container->getParameter('kernel.root_dir') . '/../app/twilio/spool/';
+
+            $value = $this->ask($this->getStringQuestion('Which spool directory to use (' . $defaultDirectory . ')', [$defaultDirectory]));
+        }
+
+        return $value;
     }
 
     private function getStringQuestion(string $questionText, array $validOptions = []): Question\Question
@@ -166,8 +187,10 @@ class GenerateCommand extends ContainerAwareCommand
                 throw new \Exception('You must enter either true or false.');
             }
 
-            return (bool)$value;
+            return in_array($value, [true, 'true'], true);
         });
+
+        return $question;
     }
 
     private function getQuestion(string $questionText): Question\Question
@@ -176,5 +199,10 @@ class GenerateCommand extends ContainerAwareCommand
         $question->setMaxAttempts(2);
 
         return $question;
+    }
+
+    private function ask($question)
+    {
+        return $this->questionHelper->ask($this->input, $this->output, $question);
     }
 }
