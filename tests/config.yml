@@ -1,0 +1,17 @@
+sixpaths:
+    twilio:
+        # Required: Account SID
+        username: ~
+        # Required: Auth Token
+        password: ~
+
+        # Optional: Spool
+        spool:
+            # Optional: Whether or not to spool messages or send immediately
+            enabled: false
+            # Optional: Which spool type to use [file|memory]
+            type: file
+            # Optional: Spool directory
+            directory: "%kernel.root_dir%/../app/twilio/spool/"
+            # Optional: Retain after sending
+            retain: false

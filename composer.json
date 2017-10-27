@@ -1,0 +1,29 @@
+{
+    "name": "six-paths/twilio-bundle",
+    "type": "symfony-bundle",
+    "description": "A Symfony bundle wrapping the Twilio SDK",
+    "keywords": ["Twilio"],
+    "homepage": "https://github.com/six-paths/twilio-bundle",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Jack O'Hara",
+            "email": "jack.ohara@sixpaths.co.uk"
+        }
+    ],
+    "require": {
+        "six-paths/components": "dev-master@dev",
+        "php": ">=7.1",
+        "symfony/framework-bundle": "~2.8",
+        "doctrine/orm": "~2.5",
+        "twilio/sdk": "5.15.3"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "~5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Sixpaths\\TwilioBundle\\": "src/Sixpaths/TwilioBundle/"
+        }
+    }
+}

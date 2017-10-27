@@ -1,0 +1,25 @@
+parameters:
+    sixpaths_twilio:
+        username: ~
+        password: ~
+        spool:
+            enabled: false
+            type: file
+            directory: "%kernel.root_dir%/../app/twilio/spool/"
+            retain: false
+
+services:
+    sixpaths.twilio:
+        class: Sixpaths\TwilioBundle\Client
+        arguments:
+            parameters: "%sixpaths_twilio%"
+
+    sixpaths.twilio.command.message.send:
+        class: Sixpaths\TwilioBundle\Command\Message\SendCommand
+        arguments:
+            twilio: "@sixpaths.twilio"
+
+    sixpaths.twilio.command.message.generate:
+        class: Sixpaths\TwilioBundle\Command\Message\GenerateCommand
+        arguments:
+            twilio: "@sixpaths.twilio"
