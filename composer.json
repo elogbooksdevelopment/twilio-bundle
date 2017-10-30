@@ -15,7 +15,6 @@
         "six-paths/components": "dev-master@dev",
         "php": ">=7.1",
         "symfony/framework-bundle": "~2.8",
-        "doctrine/orm": "~2.5",
         "twilio/sdk": "5.15.3"
     },
     "require-dev": {
