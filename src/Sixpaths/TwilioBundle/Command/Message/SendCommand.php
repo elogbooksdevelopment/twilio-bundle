@@ -73,7 +73,7 @@ class SendCommand extends ContainerAwareCommand
             return;
         }
 
-        $this->finder->files()->in($this->parameters->getParameter('spool.directory'));
+        $this->finder->files()->in($this->parameters->getParameter('spool.directory'))->depth('== 0');
 
         foreach ($this->finder as $file) {
             $rawContent = $file->getContents();
